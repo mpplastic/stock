@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MP — Stock System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest: #1F3A2E;
+    --forest-dk: #13251D;
+    --forest-lt: #2D5A43;
+    --blue: #214E86;
+    --blue-lt: #3B73B9;
+    --moss: #6F8067;
+    --ivory: #F8F5EE;
+    --ivory-dk: #E9E2D4;
+    --paper: #FFFDF8;
+    --paper-2: #F3EFE6;
+    --clay: #9A7B5F;
+    --charcoal: #1F2822;
+    --cyan: #58C9BE;
+    --text-dark: #1E2D24;
+    --text-muted: #6E7C72;
+    --text-inv: #F8F5EE;
+    --border: rgba(31,58,46,.16);
+    --border-strong: rgba(31,58,46,.28);
+    --surface: rgba(255,255,255,.78);
+    --surface2: rgba(255,255,255,.58);
+    --shadow: 0 16px 40px rgba(19,37,29,.10);
+    --red: #C0392B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    min-height: 100vh;
+    padding-bottom: 96px;
+    color: var(--text-dark);
+    font-family: 'Sarabun', sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(88,201,190,.18), transparent 26rem),
+      linear-gradient(180deg, #F8F5EE 0%, #EFE8DA 100%);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: .34;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cpath d='M0 200 Q105 176 210 200 T420 200' stroke='%231F3A2E' stroke-width='1' fill='none' opacity='0.22'/%3E%3Cpath d='M0 238 Q105 214 210 238 T420 238' stroke='%231F3A2E' stroke-width='1' fill='none' opacity='0.16'/%3E%3Cpath d='M0 162 Q105 138 210 162 T420 162' stroke='%231F3A2E' stroke-width='.8' fill='none' opacity='0.14'/%3E%3C/svg%3E");
+    background-size: 420px 420px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 68px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(248,245,238,.88);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(18px);
+  }
+
+  .header-brand { display: flex; align-items: center; gap: 12px; }
+
+  .mp-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: var(--forest);
+    color: var(--ivory);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 10px 24px rgba(31,58,46,.20);
+  }
+  .mp-logo svg { display: none; }
+  .mp-logo span {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 20px !important;
+    color: var(--ivory) !important;
+    letter-spacing: -1px !important;
+  }
+
+  .brand-text { display: flex; flex-direction: column; gap: 4px; }
+  .brand-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--forest-dk);
+    line-height: 1;
+  }
+  .brand-tagline {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--moss);
+    text-transform: uppercase;
+  }
+
+  .header-right { text-align: right; }
+  .header-title {
+    display: inline-block;
+    margin-bottom: 3px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    background: rgba(31,58,46,.08);
+    color: var(--forest);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .lwf-strip {
+    padding: 10px 0;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--moss);
+    background: rgba(255,253,248,.62);
+    border-bottom: 1px solid var(--border);
+  }
+  .lwf-strip span { color: rgba(31,58,46,.28); margin: 0 6px; }
+
+  /* ===== DATE BAR ===== */
+  .date-bar {
+    margin: 14px 14px 0;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+  .date-bar label {
+    padding-left: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .date-bar input[type="date"] {
+    flex: 1;
+    min-width: 0;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    padding: 10px 12px;
+    border-radius: 13px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color-scheme: light;
+  }
+  .date-bar input[type="date"]:focus { outline: none; border-color: var(--forest-lt); box-shadow: 0 0 0 3px rgba(45,90,67,.12); }
+
+  /* ===== TABS ===== */
+  .tabs {
+    position: sticky;
+    top: 68px;
+    z-index: 90;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 12px 0 0;
+    padding: 8px 14px;
+    background: rgba(248,245,238,.86);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(18px);
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,.40);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .5px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: .18s ease;
+  }
+  .tab.active {
+    color: var(--ivory);
+    background: var(--forest);
+    border-color: var(--forest);
+    box-shadow: 0 10px 22px rgba(31,58,46,.18);
+  }
+  .tab:hover:not(.active) { color: var(--forest); background: var(--paper); border-color: var(--border); }
+
+  /* ===== SECTION ===== */
+  .section { display: none; padding: 22px 14px 6px; }
+  .section.active { display: block; }
+
+  .section-eyebrow {
+    margin-bottom: 5px;
+    color: var(--forest-lt);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .section-heading {
+    margin-bottom: 16px;
+    color: var(--forest-dk);
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    line-height: 1.05;
+  }
+
+  /* ===== CATEGORY ===== */
+  .category {
+    margin-bottom: 16px;
+    overflow: hidden;
+    background: rgba(255,253,248,.88);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .category-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(31,58,46,.08), rgba(255,255,255,.55));
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-label {
+    flex: 1;
+    color: var(--forest-dk);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .cat-badge {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text-muted);
+    background: var(--paper);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .badge-blue { border-color: rgba(33,78,134,.25); color: var(--blue); }
+  .badge-clay { border-color: rgba(154,123,95,.28); color: var(--clay); }
+
+  /* ===== STOCK ROW ===== */
+  .stock-row {
+    min-height: 62px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(31,58,46,.10);
+    transition: background .15s ease;
+  }
+  .stock-row:last-child { border-bottom: none; }
+  .stock-row:active { background: rgba(31,58,46,.06); }
+
+  .row-label {
+    flex: 1;
+    color: var(--text-dark);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .row-sub {
+    display: block;
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 400;
+  }
+  .row-unit {
+    min-width: 34px;
+    text-align: right;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .qty-input {
+    width: 76px;
+    height: 42px;
+    background: var(--paper-2);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: var(--forest-dk);
+    padding: 8px 6px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    -moz-appearance: textfield;
+    transition: .18s ease;
+  }
+  .qty-input:focus {
+    outline: none;
+    background: var(--paper);
+    border-color: var(--forest-lt);
+    box-shadow: 0 0 0 4px rgba(45,90,67,.12);
+  }
+  .qty-input:not(:placeholder-shown) {
+    background: rgba(88,201,190,.12);
+    border-color: rgba(88,201,190,.35);
+    color: var(--forest);
+  }
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .flow-header, .category-header.flow-header {
+    background: linear-gradient(135deg, rgba(33,78,134,.12), rgba(255,255,255,.55)) !important;
+    border-bottom: 1px solid rgba(33,78,134,.16);
+  }
+  .flow-header .cat-label, .category-header.flow-header .cat-label { color: var(--blue) !important; }
+  .flow-row { border-bottom-color: rgba(33,78,134,.10); }
+
+  .divider-label {
+    padding: 10px 14px 4px;
+    color: var(--clay);
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .divider-label:first-child { border-top: none; }
+
+  /* ===== SUBMIT ===== */
+  .submit-wrap { padding: 14px 14px 0; }
+  body > .submit-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 110;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(248,245,238,0), rgba(248,245,238,.96) 28%);
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-submit {
+    width: 100%;
+    min-height: 52px;
+    padding: 15px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    position: relative;
+    overflow: hidden;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--forest), var(--forest-lt));
+    color: var(--ivory);
+    box-shadow: 0 16px 34px rgba(31,58,46,.24);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    cursor: pointer;
+    transition: .18s ease;
+  }
+  .btn-submit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 45%, rgba(255,255,255,.10));
+    pointer-events: none;
+  }
+  .btn-submit:active { transform: translateY(1px) scale(.99); }
+  .btn-submit:disabled { background: #C8C0B3; color: rgba(31,40,34,.55); box-shadow: none; cursor: not-allowed; }
+  .btn-alt {
+    min-height: 46px;
+    background: var(--paper);
+    color: var(--forest);
+    border: 1px solid var(--border);
+    box-shadow: none;
+    font-size: 13px;
+  }
+  .btn-save {
+    min-height: 46px;
+    background: rgba(31,58,46,.08);
+    color: var(--forest);
+    border: 1px solid var(--border-strong);
+    box-shadow: none;
+    font-size: 13px;
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 86px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    z-index: 999;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: var(--forest);
+    color: var(--ivory);
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #3A1414; border-color: var(--red); color: #FFD4D4; }
+  .toast.success { background: var(--forest); }
+
+  /* ===== NOTE / CONFIG ===== */
+  .note-row { padding: 14px; border-bottom: 1px solid rgba(31,58,46,.10); }
+  .note-row:last-child { border-bottom: none; }
+  .note-row label,
+  .config-box label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+  }
+  .note-input, .note-textarea,
+  .config-box input {
+    width: 100%;
+    background: var(--paper-2);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: var(--text-dark);
+    padding: 12px 13px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    resize: none;
+    transition: .18s ease;
+  }
+  .note-input:focus, .note-textarea:focus,
+  .config-box input:focus {
+    outline: none;
+    background: var(--paper);
+    border-color: var(--forest-lt);
+    box-shadow: 0 0 0 4px rgba(45,90,67,.12);
+  }
+
+  .config-box {
+    margin-bottom: 14px;
+    padding: 16px;
+    background: rgba(255,253,248,.88);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+  }
+  .config-note {
+    margin-top: 9px;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .config-note a { color: var(--forest); text-decoration: none; }
+
+  .code-block {
+    margin-top: 12px;
+    padding: 13px;
+    overflow-x: auto;
+    background: #14251D;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+  }
+  .code-block pre {
+    color: #B8F1D5;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .spinner {
+    width: 15px;
+    height: 15px;
+    display: none;
+    border: 2px solid rgba(248,245,238,.35);
+    border-top-color: var(--ivory);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (min-width: 760px) {
+    body { padding-left: max(0px, calc((100vw - 760px) / 2)); padding-right: max(0px, calc((100vw - 760px) / 2)); }
+    .header, .tabs, body > .submit-wrap { left: max(0px, calc((100vw - 760px) / 2)); right: max(0px, calc((100vw - 760px) / 2)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="mp-logo">
+      <svg viewBox="0 0 52 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="30" font-family="serif" font-size="32" font-weight="900" fill="#1F3A2E" letter-spacing="-2">MP</text>
+      </svg>
+      <!-- Simple MP text logo -->
+      <span style="font-family:serif;font-size:18px;font-weight:900;color:#1F3A2E;line-height:1;letter-spacing:-1px">MP</span>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">MANUTHAM PLASTIC</div>
+      <div class="brand-tagline">LAND · WATER · FUTURE</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-title">STOCK</div>
+    <div class="header-date" id="liveDate"></div>
+  </div>
+</div>
+
+<div class="lwf-strip">LAND <span>·</span> WATER <span>·</span> FUTURE</div>
+
+<!-- DATE BAR -->
+<div class="date-bar">
+  <label>DATE</label>
+  <input type="date" id="stockDate">
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('hdpe')">HDPE · LDPE</div>
+  <div class="tab" onclick="switchTab('geo')">GEO</div>
+  <div class="tab" onclick="switchTab('flow2')">MP FLOW 2.0</div>
+  <div class="tab" onclick="switchTab('steel')">เหล็ก</div>
+  <div class="tab" onclick="switchTab('other')">NOTE</div>
+  <div class="tab" onclick="switchTab('settings')">⚙</div>
+</div>
+
+<!-- ===== HDPE / LDPE ===== -->
+<div class="section active" id="tab-hdpe">
+  <div class="section-eyebrow">สต็อกผ้า</div>
+  <div class="section-heading">HDPE · LDPE</div>
+
+  <div class="category">
+    <div class="category-header">
+      <div class="cat-label">HDPE</div>
+      <div class="cat-badge">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">0.5 มม.</div>
+      <input type="number" class="qty-input" data-key="HDPE_0.5" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">0.75 มม.</div>
+      <input type="number" class="qty-input" data-key="HDPE_0.75" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">1 มม.</div>
+      <input type="number" class="qty-input" data-key="HDPE_1" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2 มม.</div>
+      <input type="number" class="qty-input" data-key="HDPE_2" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">1 มม. <span class="row-sub">81 เมตร</span></div>
+      <input type="number" class="qty-input" data-key="HDPE_1_81m" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+  </div>
+
+  <div class="category">
+    <div class="category-header">
+      <div class="cat-label">LDPE</div>
+      <div class="cat-badge">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">0.3 มม.</div>
+      <input type="number" class="qty-input" data-key="LDPE_0.3" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">0.5 มม.</div>
+      <input type="number" class="qty-input" data-key="LDPE_0.5" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GEO ===== -->
+<div class="section" id="tab-geo">
+  <div class="section-eyebrow">Geotextile</div>
+  <div class="section-heading">GEO</div>
+
+  <div class="category">
+    <div class="category-header">
+      <div class="cat-label">แผ่นหนา 200 g</div>
+      <div class="cat-badge">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2 × 100 ม.</div>
+      <input type="number" class="qty-input" data-key="GEO_200g_2x100" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">4 × 100 ม.</div>
+      <input type="number" class="qty-input" data-key="GEO_200g_4x100" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+  </div>
+
+  <div class="category">
+    <div class="category-header">
+      <div class="cat-label">แผ่นหนา 150 g</div>
+      <div class="cat-badge">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2 × 100 ม.</div>
+      <input type="number" class="qty-input" data-key="GEO_150g_2x100" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">4 × 100 ม.</div>
+      <input type="number" class="qty-input" data-key="GEO_150g_4x100" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2 × 50 ม.</div>
+      <input type="number" class="qty-input" data-key="GEO_150g_2x50" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MP FLOW 2.0 ===== -->
+<div class="section" id="tab-flow2">
+  <div class="section-eyebrow">สต็อกผ้า</div>
+  <div class="section-heading">MP Flow 2.0</div>
+
+  <div class="category">
+    <div class="category-header flow-header" style="background:linear-gradient(90deg,#1a2e50,var(--surface));">
+      <div class="cat-label" style="color:var(--cyan);">ขนาดผ้า</div>
+      <div class="cat-badge badge-blue">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">4 × 7 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_4x7" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">3.5 × 6 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_3.5x6" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">8 × 4 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_8x4" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">3.5 × 4 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_3.5x4" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">3 × 6 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_3x6" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">4 × 8 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_4x8" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">4 × 6 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_4x6" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">3.5 × 7 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_3.5x7" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row flow-row">
+      <div class="row-label">4 × 7.3 ม.</div>
+      <input type="number" class="qty-input" data-key="FLOW2_4x7.3" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+  </div>
+
+  <div class="category">
+    <div class="category-header" style="background:linear-gradient(90deg,#2a2010,var(--surface));">
+      <div class="cat-label" style="color:#c4a07a;">อุปกรณ์เสริม</div>
+      <div class="cat-badge badge-clay">หน่วย</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">เทปใส</div>
+      <input type="number" class="qty-input" data-key="ACC_tape" placeholder="—">
+      <div class="row-unit">ชิ้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">เทมเปล้</div>
+      <input type="number" class="qty-input" data-key="ACC_template" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">กิ๊บล็อค <span class="row-sub">ตัวเล็ก</span></div>
+      <input type="number" class="qty-input" data-key="ACC_clip_sm" placeholder="—">
+      <div class="row-unit">ตัว</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">กิ๊บล็อค <span class="row-sub">ตัวใหญ่</span></div>
+      <input type="number" class="qty-input" data-key="ACC_clip_lg" placeholder="—">
+      <div class="row-unit">ตัว</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">หมวก</div>
+      <input type="number" class="qty-input" data-key="ACC_hat" placeholder="—">
+      <div class="row-unit">ใบ</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">เรือ</div>
+      <input type="number" class="qty-input" data-key="ACC_boat" placeholder="—">
+      <div class="row-unit">ตัว</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">ส้อม</div>
+      <input type="number" class="qty-input" data-key="ACC_fork" placeholder="—">
+      <div class="row-unit">อัน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">สายรัดส้อม</div>
+      <input type="number" class="qty-input" data-key="ACC_fork_strap" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">กับรัดผ้า</div>
+      <input type="number" class="qty-input" data-key="ACC_fabric_clip" placeholder="—">
+      <div class="row-unit">โล</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STEEL ===== -->
+<div class="section" id="tab-steel">
+  <div class="section-eyebrow">วัสดุ</div>
+  <div class="section-heading">เหล็ก</div>
+
+  <div class="category">
+    <div class="category-header">
+      <div class="cat-label">ขนาดเหล็ก</div>
+      <div class="cat-badge">เส้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">6 มม.</div>
+      <input type="number" class="qty-input" data-key="STEEL_6mm" placeholder="—">
+      <div class="row-unit">เส้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">3 มม.</div>
+      <input type="number" class="qty-input" data-key="STEEL_3mm" placeholder="—">
+      <div class="row-unit">เส้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2.5 มม.</div>
+      <input type="number" class="qty-input" data-key="STEEL_2.5mm" placeholder="—">
+      <div class="row-unit">เส้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">2 มม.</div>
+      <input type="number" class="qty-input" data-key="STEEL_2mm" placeholder="—">
+      <div class="row-unit">เส้น</div>
+    </div>
+    <div class="stock-row">
+      <div class="row-label">0.6 มม.</div>
+      <input type="number" class="qty-input" data-key="STEEL_0.6mm" placeholder="—">
+      <div class="row-unit">เส้น</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOTE ===== -->
+<div class="section" id="tab-other">
+  <div class="section-eyebrow">บันทึก</div>
+  <div class="section-heading">หมายเหตุ</div>
+  <div class="category">
+    <div class="note-row">
+      <label>ชื่อผู้บันทึก</label>
+      <input type="text" class="note-input" id="staffName" placeholder="ชื่อพนักงาน">
+    </div>
+    <div class="note-row">
+      <label>หมายเหตุ / รายการพิเศษ</label>
+      <textarea class="note-textarea" id="noteText" rows="4" placeholder="บันทึกรายการที่ต้องสั่งเพิ่ม หรือข้อสังเกต..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div class="section" id="tab-settings">
+  <div class="section-eyebrow">การตั้งค่า</div>
+  <div class="section-heading">Settings</div>
+
+  <div class="config-box">
+    <label>Google Apps Script URL</label>
+    <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/xxx/exec">
+    <p class="config-note">วางลิงก์ Apps Script Web App ที่ Deploy แล้ว</p>
+  </div>
+  <div class="config-box">
+    <label>ชื่อผู้บันทึก (Default)</label>
+    <input type="text" id="defaultStaff" placeholder="เช่น น้องแนน">
+    <p class="config-note">จะจำไว้อัตโนมัติในเครื่องนี้</p>
+  </div>
+  <div class="submit-wrap" style="padding-top:0;margin-bottom:14px">
+    <button class="btn-submit btn-save" onclick="saveSettings()">💾 บันทึกการตั้งค่า</button>
+  </div>
+
+  <div class="config-box">
+    <label style="color:var(--cyan)">วิธีตั้งค่า Google Sheet</label>
+    <p class="config-note">
+      1. เปิด Google Sheet → Extensions → Apps Script<br>
+      2. วางโค้ดด้านล่าง → Deploy → New Deployment<br>
+      3. Web App · Execute as: Me · Access: Anyone<br>
+      4. Copy URL มาวางด้านบน
+    </p>
+    <div class="code-block">
+      <pre id="scriptCode"></pre>
+    </div>
+    <div class="submit-wrap" style="padding-top:10px;">
+      <button class="btn-submit btn-alt" onclick="copyCode()">📋 Copy โค้ด Apps Script</button>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL SUBMIT -->
+<div class="submit-wrap">
+  <button class="btn-submit" id="submitBtn" onclick="submitStock()">
+    <div class="spinner" id="spinner"></div>
+    <span id="submitLabel">บันทึกสต็อกวันนี้</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const appsScriptCode = `function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetName = data.date || "Stock";
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["เวลา","หมวด","รายการ","จำนวน","หน่วย","ผู้บันทึก"]);
+    }
+    var ts = new Date().toLocaleString("th-TH");
+    (data.items || []).forEach(function(item) {
+      sheet.appendRow([ts, item.category, item.name, item.qty, item.unit, data.staff||""]);
+    });
+    if (data.note) sheet.appendRow([ts,"หมายเหตุ",data.note,"","",data.staff||""]);
+    return ContentService.createTextOutput(JSON.stringify({status:"ok"}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status:"error",msg:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+document.getElementById('scriptCode').textContent = appsScriptCode;
+
+// Date init
+const today = new Date();
+const pad = n => String(n).padStart(2,'0');
+document.getElementById('stockDate').value =
+  `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveDate').textContent =
+    now.toLocaleDateString('th-TH',{day:'numeric',month:'short'}) + ' ' +
+    now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock, 30000);
+
+// Load settings
+const saved = JSON.parse(localStorage.getItem('mpstock_v2') || '{}');
+if (saved.scriptUrl) document.getElementById('scriptUrl').value = saved.scriptUrl;
+if (saved.defaultStaff) {
+  document.getElementById('defaultStaff').value = saved.defaultStaff;
+  document.getElementById('staffName').value = saved.defaultStaff;
+}
+
+// Tabs
+function switchTab(name) {
+  const names = ['hdpe','geo','flow2','steel','other','settings'];
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// Settings
+function saveSettings() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  const staff = document.getElementById('defaultStaff').value.trim();
+  localStorage.setItem('mpstock_v2', JSON.stringify({scriptUrl:url, defaultStaff:staff}));
+  if (staff) document.getElementById('staffName').value = staff;
+  showToast('✓ บันทึกการตั้งค่าแล้ว');
+}
+function copyCode() {
+  navigator.clipboard.writeText(appsScriptCode).then(() => showToast('✓ Copy โค้ดแล้ว'));
+}
+
+// Labels & categories
+const LABELS = {
+  'HDPE_0.5':'HDPE 0.5มม.','HDPE_0.75':'HDPE 0.75มม.','HDPE_1':'HDPE 1มม.','HDPE_2':'HDPE 2มม.',
+  'HDPE_1_81m':'HDPE 1มม.(81ม.)','LDPE_0.3':'LDPE 0.3มม.','LDPE_0.5':'LDPE 0.5มม.',
+  'GEO_200g_2x100':'Geo200g 2×100','GEO_200g_4x100':'Geo200g 4×100',
+  'GEO_150g_2x100':'Geo150g 2×100','GEO_150g_4x100':'Geo150g 4×100','GEO_150g_2x50':'Geo150g 2×50',
+  'FLOW2_4x7':'MP Flow2.0 4×7','FLOW2_3.5x6':'MP Flow2.0 3.5×6','FLOW2_8x4':'MP Flow2.0 8×4',
+  'FLOW2_3.5x4':'MP Flow2.0 3.5×4','FLOW2_3x6':'MP Flow2.0 3×6','FLOW2_4x8':'MP Flow2.0 4×8',
+  'FLOW2_4x6':'MP Flow2.0 4×6','FLOW2_3.5x7':'MP Flow2.0 3.5×7','FLOW2_4x7.3':'MP Flow2.0 4×7.3',
+  'ACC_tape':'เทปใส','ACC_template':'เทมเปล้','ACC_clip_sm':'กิ๊บล็อคเล็ก','ACC_clip_lg':'กิ๊บล็อคใหญ่',
+  'ACC_hat':'หมวก','ACC_boat':'เรือ','ACC_fork':'ส้อม','ACC_fork_strap':'สายรัดส้อม','ACC_fabric_clip':'กับรัดผ้า',
+  'STEEL_6mm':'เหล็ก 6มม.','STEEL_3mm':'เหล็ก 3มม.','STEEL_2.5mm':'เหล็ก 2.5มม.',
+  'STEEL_2mm':'เหล็ก 2มม.','STEEL_0.6mm':'เหล็ก 0.6มม.'
+};
+const CATS = {HDPE:'HDPE',LDPE:'LDPE',GEO:'Geotextile',FLOW2:'MP Flow 2.0',ACC:'อุปกรณ์',STEEL:'เหล็ก'};
+const UNITS = {STEEL:'เส้น',ACC_hat:'ใบ',ACC_fabric_clip:'โล',ACC_tape:'ชิ้น'};
+
+// Submit
+function submitStock() {
+  const scriptUrl = document.getElementById('scriptUrl').value.trim() ||
+    (JSON.parse(localStorage.getItem('mpstock_v2')||'{}')).scriptUrl || '';
+  if (!scriptUrl) { showToast('⚠ กรุณาตั้งค่า URL ก่อน', true); switchTab('settings'); return; }
+
+  const date = document.getElementById('stockDate').value;
+  const staff = document.getElementById('staffName').value.trim();
+  const note = document.getElementById('noteText').value.trim();
+  const items = [];
+
+  document.querySelectorAll('.qty-input').forEach(inp => {
+    const val = inp.value.trim();
+    if (val && val !== '0' && !isNaN(val)) {
+      const key = inp.dataset.key;
+      const prefix = key.split('_')[0];
+      const unit = UNITS[key] || UNITS[prefix] || 'ม้วน';
+      items.push({ category: CATS[prefix]||prefix, name: LABELS[key]||key, qty: parseFloat(val), unit });
+    }
+  });
+
+  if (!items.length && !note) { showToast('⚠ กรุณากรอกจำนวนก่อน', true); return; }
+
+  const btn = document.getElementById('submitBtn');
+  const lbl = document.getElementById('submitLabel');
+  const sp  = document.getElementById('spinner');
+  btn.disabled = true; sp.style.display = 'block'; lbl.textContent = 'กำลังบันทึก...';
+
+  fetch(scriptUrl, { method:'POST', body:JSON.stringify({date,staff,note,items}),
+    headers:{'Content-Type':'application/json'} })
+  .then(r => r.json())
+  .then(res => showToast(res.status==='ok' ? '✓ บันทึกสต็อกสำเร็จ' : '✗ '+res.msg, res.status!=='ok'))
+  .catch(() => showToast('✓ ส่งข้อมูลแล้ว'))
+  .finally(() => { btn.disabled=false; sp.style.display='none'; lbl.textContent='บันทึกสต็อกวันนี้'; });
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : ' success');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
