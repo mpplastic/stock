@@ -532,11 +532,7 @@
 <div class="header">
   <div class="header-brand">
     <div class="mp-logo">
-      <svg viewBox="0 0 52 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text x="0" y="30" font-family="serif" font-size="32" font-weight="900" fill="#1F3A2E" letter-spacing="-2">MP</text>
-      </svg>
-      <!-- Simple MP text logo -->
-      <span style="font-family:serif;font-size:18px;font-weight:900;color:#1F3A2E;line-height:1;letter-spacing:-1px">MP</span>
+      <span style="font-family:serif;font-size:18px;font-weight:900;color:#F8F5EE;line-height:1;letter-spacing:-1px">MP</span>
     </div>
     <div class="brand-text">
       <div class="brand-name">MANUTHAM PLASTIC</div>
@@ -590,6 +586,12 @@
     <div class="stock-row">
       <div class="row-label">1 มม.</div>
       <input type="number" class="qty-input" data-key="HDPE_1" placeholder="—">
+      <div class="row-unit">ม้วน</div>
+    </div>
+    <!-- เพิ่ม HDPE 1.5mm ที่ขาดไปจาก plan -->
+    <div class="stock-row">
+      <div class="row-label">1.5 มม.</div>
+      <input type="number" class="qty-input" data-key="HDPE_1.5" placeholder="—">
       <div class="row-unit">ม้วน</div>
     </div>
     <div class="stock-row">
@@ -878,25 +880,76 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// Apps Script code — เขียนใหม่ให้เก็บใน Sheet เดียว "Stock_Log"
+// เพื่อให้ Dashboard ดึงข้อมูลได้ง่าย แทนที่จะแยกเป็น sheet ต่อวัน
 const appsScriptCode = `function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheetName = data.date || "Stock";
-    var sheet = ss.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = ss.insertSheet(sheetName);
-      sheet.appendRow(["เวลา","หมวด","รายการ","จำนวน","หน่วย","ผู้บันทึก"]);
+
+    // Sheet หลัก — append ทุก log ไว้ที่นี่
+    var logSheet = ss.getSheetByName("Stock_Log");
+    if (!logSheet) {
+      logSheet = ss.insertSheet("Stock_Log");
+      logSheet.appendRow(["timestamp","date","category","item_key","item_name","qty","unit","staff","note"]);
+      logSheet.setFrozenRows(1);
     }
-    var ts = new Date().toLocaleString("th-TH");
+
+    var ts = new Date().toISOString();
+    var date = data.date || "";
+    var staff = data.staff || "";
+    var note = data.note || "";
+
     (data.items || []).forEach(function(item) {
-      sheet.appendRow([ts, item.category, item.name, item.qty, item.unit, data.staff||""]);
+      logSheet.appendRow([ts, date, item.category, item.key || "", item.name, item.qty, item.unit, staff, ""]);
     });
-    if (data.note) sheet.appendRow([ts,"หมายเหตุ",data.note,"","",data.staff||""]);
-    return ContentService.createTextOutput(JSON.stringify({status:"ok"}))
+
+    // บันทึก note แยก row
+    if (note) {
+      logSheet.appendRow([ts, date, "หมายเหตุ", "NOTE", note, "", "", staff, note]);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"ok", rows: (data.items||[]).length}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"error", msg: err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// GET — ดึงข้อมูล stock ล่าสุดแต่ละ item สำหรับ Dashboard
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logSheet = ss.getSheetByName("Stock_Log");
+    if (!logSheet) return ContentService.createTextOutput(JSON.stringify({status:"empty"})).setMimeType(ContentService.MimeType.JSON);
+
+    var rows = logSheet.getDataRange().getValues();
+    var latest = {}; // key -> row ล่าสุด
+
+    for (var i = 1; i < rows.length; i++) {
+      var key = rows[i][3]; // item_key
+      if (key && key !== "NOTE") {
+        latest[key] = {
+          date: rows[i][1],
+          category: rows[i][2],
+          key: key,
+          name: rows[i][4],
+          qty: rows[i][5],
+          unit: rows[i][6]
+        };
+      }
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"ok", stock: Object.values(latest)}))
       .setMimeType(ContentService.MimeType.JSON);
   } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({status:"error",msg:err.message}))
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"error", msg: err.message}))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }`;
@@ -950,7 +1003,8 @@ function copyCode() {
 
 // Labels & categories
 const LABELS = {
-  'HDPE_0.5':'HDPE 0.5มม.','HDPE_0.75':'HDPE 0.75มม.','HDPE_1':'HDPE 1มม.','HDPE_2':'HDPE 2มม.',
+  'HDPE_0.5':'HDPE 0.5มม.','HDPE_0.75':'HDPE 0.75มม.','HDPE_1':'HDPE 1มม.',
+  'HDPE_1.5':'HDPE 1.5มม.','HDPE_2':'HDPE 2มม.',
   'HDPE_1_81m':'HDPE 1มม.(81ม.)','LDPE_0.3':'LDPE 0.3มม.','LDPE_0.5':'LDPE 0.5มม.',
   'GEO_200g_2x100':'Geo200g 2×100','GEO_200g_4x100':'Geo200g 4×100',
   'GEO_150g_2x100':'Geo150g 2×100','GEO_150g_4x100':'Geo150g 4×100','GEO_150g_2x50':'Geo150g 2×50',
@@ -965,7 +1019,7 @@ const LABELS = {
 const CATS = {HDPE:'HDPE',LDPE:'LDPE',GEO:'Geotextile',FLOW2:'MP Flow 2.0',ACC:'อุปกรณ์',STEEL:'เหล็ก'};
 const UNITS = {STEEL:'เส้น',ACC_hat:'ใบ',ACC_fabric_clip:'โล',ACC_tape:'ชิ้น'};
 
-// Submit
+// Submit — ส่ง item_key ไปด้วยเพื่อให้ doGet() ดึง latest ได้
 function submitStock() {
   const scriptUrl = document.getElementById('scriptUrl').value.trim() ||
     (JSON.parse(localStorage.getItem('mpstock_v2')||'{}')).scriptUrl || '';
@@ -982,7 +1036,7 @@ function submitStock() {
       const key = inp.dataset.key;
       const prefix = key.split('_')[0];
       const unit = UNITS[key] || UNITS[prefix] || 'ม้วน';
-      items.push({ category: CATS[prefix]||prefix, name: LABELS[key]||key, qty: parseFloat(val), unit });
+      items.push({ key, category: CATS[prefix]||prefix, name: LABELS[key]||key, qty: parseFloat(val), unit });
     }
   });
 
@@ -996,7 +1050,7 @@ function submitStock() {
   fetch(scriptUrl, { method:'POST', body:JSON.stringify({date,staff,note,items}),
     headers:{'Content-Type':'application/json'} })
   .then(r => r.json())
-  .then(res => showToast(res.status==='ok' ? '✓ บันทึกสต็อกสำเร็จ' : '✗ '+res.msg, res.status!=='ok'))
+  .then(res => showToast(res.status==='ok' ? `✓ บันทึก ${res.rows} รายการ` : '✗ '+res.msg, res.status!=='ok'))
   .catch(() => showToast('✓ ส่งข้อมูลแล้ว'))
   .finally(() => { btn.disabled=false; sp.style.display='none'; lbl.textContent='บันทึกสต็อกวันนี้'; });
 }
