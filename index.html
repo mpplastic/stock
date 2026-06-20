@@ -1047,11 +1047,15 @@ function submitStock() {
   const sp  = document.getElementById('spinner');
   btn.disabled = true; sp.style.display = 'block'; lbl.textContent = 'กำลังบันทึก...';
 
-  fetch(scriptUrl, { method:'POST', body:JSON.stringify({date,staff,note,items}),
-    headers:{'Content-Type':'application/json'} })
-  .then(r => r.json())
-  .then(res => showToast(res.status==='ok' ? `✓ บันทึก ${res.rows} รายการ` : '✗ '+res.msg, res.status!=='ok'))
-  .catch(() => showToast('✓ ส่งข้อมูลแล้ว'))
+  // Google Apps Script ไม่รับ application/json ตรงๆ — ต้องใช้ no-cors + text/plain
+  fetch(scriptUrl, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({date, staff, note, items}),
+    headers: {'Content-Type': 'text/plain;charset=utf-8'}
+  })
+  .then(() => showToast(`✓ บันทึก ${items.length} รายการแล้ว`))
+  .catch(() => showToast('✗ ส่งไม่สำเร็จ ตรวจ URL อีกครั้ง', true))
   .finally(() => { btn.disabled=false; sp.style.display='none'; lbl.textContent='บันทึกสต็อกวันนี้'; });
 }
 
